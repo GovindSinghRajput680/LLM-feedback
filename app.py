@@ -34,6 +34,27 @@ def save_excel(dataframe, file_id, output_filename="Rated.xlsx"):
 def ensure_files_dict():
     if "files" not in session:
         session["files"] = {}
+def process_val(raw_val, col_name):
+    """Converts FILES-type paths to GitHub links if column is FILES, else returns clean string or None."""
+    if pd.notna(raw_val) and str(raw_val).strip():
+        val = str(raw_val).strip()
+        if col_name.strip().lower() == "files":
+            path_parts = val.split("/")
+            # Remove last duplicate if exists
+            if len(path_parts) > 1 and path_parts[-1] == path_parts[-2]:
+                path_parts = path_parts[:-1]  # remove the last duplicate part
+            
+            try:
+                idx = path_parts.index("tests")  # where useful path starts
+                clean_path = "/".join(path_parts[idx:])
+                return f"https://github.com/curl/curl/blob/master/{clean_path}"
+            except ValueError:
+                # 'tests' not found, just join cleaned path parts
+                return "/".join(path_parts)
+        else:
+            return val
+    else:
+        return None
 
 @app.route("/")
 def home():
@@ -115,6 +136,7 @@ def upload():
             return redirect(url_for("select_columns", file=unique_filename))
     return render_template("upload.html")
 
+
 @app.route("/select_columns", methods=["GET", "POST"])
 def select_columns():
     file_id = request.args.get("file")
@@ -150,7 +172,7 @@ def select_columns():
         group_list=[]
         for i, row in df.iterrows():
             raw_file = row.get(files_col, "")
-            file_val = raw_file if (pd.notna(raw_file) and str(raw_file).strip()) else None
+            file_val = process_val(raw_file, files_col)
             code_snippet_plus_val = row.get(code_snippet_plus_col, "")
             code_snippet_plus_val = code_snippet_plus_val if (pd.notna(code_snippet_plus_val) and str(code_snippet_plus_val).strip()) else None
             code_snippet_minus_val = row.get(code_snippet_minus_col, "")
@@ -165,7 +187,7 @@ def select_columns():
             comment_Gemini_val = comment_Gemini_val if (pd.notna(comment_Gemini_val) and str(comment_Gemini_val).strip()) else None
             comment_DeepSeek_val = row.get("Comments(DeepSeek)", "")
             comment_DeepSeek_val = comment_DeepSeek_val if (pd.notna(comment_DeepSeek_val) and str(comment_DeepSeek_val).strip()) else None
-            
+    
             #response_type_val = row.get(type_col, "")
             info_dict={}
             if file_val is None:

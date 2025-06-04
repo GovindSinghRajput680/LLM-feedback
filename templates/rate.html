@@ -6,7 +6,17 @@
     <div class="flex justify-between items-center text-white">
       <p class="font-bold text-2xl text-center">File {{ current_group_idx + 1 }} of {{ total_groups }}</p>
     </div>
-    <h2 class="text-white text-center whitespace-pre-wrap">{{ current_group["file"] }}</h2>
+    <!--<h2 class="text-white text-center whitespace-pre-wrap">{{ current_group["file"] }}</h2> -->
+    <div class="text-center my-4">
+  <a 
+    href="{{ current_group['file'] }}" 
+    class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white"
+    type="button"
+  >
+    Go to file
+  </a>
+</div>
+
   </div>
   <!-- End sticky header -->
 
